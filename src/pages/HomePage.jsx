@@ -5,7 +5,8 @@ import ReservationSummary from '../components/ReservationSummary.jsx'
 import DeskFilter from '../components/DeskFilter.jsx'
 import { getReservationByDesk, getUserReservations } from '../services/reservationService.js'
 
-const mapImage = new URL('../assets/desk-map.png', import.meta.url).href
+const seatMapImage = new URL('../assets/seatmapdistribution.png', import.meta.url).href
+const configSeatImage = new URL('../assets/configseatkaleris.png', import.meta.url).href
 
 export default function HomePage({ user, desks, reservations, selectedDate, onDateChange, onReserve, onCancel, dateReservations }) {
   const [search, setSearch] = useState('')
@@ -21,6 +22,7 @@ export default function HomePage({ user, desks, reservations, selectedDate, onDa
     [dateReservations, user.id],
   )
   const [showMapPreview, setShowMapPreview] = useState(false)
+  const isKalerisUser = user?.email?.toLowerCase().endsWith('@kaleris.com')
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
@@ -40,9 +42,23 @@ export default function HomePage({ user, desks, reservations, selectedDate, onDa
                 </span>
               </div>
               {showMapPreview ? (
-                <div className="absolute z-10 mt-4 hidden w-80 rounded-3xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10 md:block sm:w-[520px]">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Office layout preview</p>
-                  <img src={mapImage} alt="Desk map preview" className="mt-3 h-80 w-full rounded-3xl object-cover" />
+                <div className="absolute z-10 mt-4 hidden w-80 rounded-3xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 md:block md:w-[560px]">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Kaleris seat plan</p>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                    <div>
+                      <p className="mb-2 text-sm font-semibold text-slate-700">Seat map</p>
+                      <img src={seatMapImage} alt="Desk map preview" className="h-72 w-full rounded-3xl object-cover" />
+                    </div>
+                    <div>
+                      <p className="mb-2 text-sm font-semibold text-slate-700">Available seat configuration</p>
+                      <img src={configSeatImage} alt="Available seat configuration" className="h-72 w-full rounded-3xl object-cover" />
+                    </div>
+                  </div>
+                  {!isKalerisUser ? (
+                    <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                      Seat map preview is available only to @kaleris.com employees.
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
               <p className="mt-3 text-sm text-slate-600">Reserve a desk for the selected day and manage your schedule.</p>
