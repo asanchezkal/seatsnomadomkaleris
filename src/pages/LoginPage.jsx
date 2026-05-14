@@ -8,6 +8,7 @@ const defaultUsers = [
 
 export default function LoginPage({ onLogin }) {
   const [input, setInput] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
   const handleSubmit = (event) => {
@@ -15,6 +16,16 @@ export default function LoginPage({ onLogin }) {
     const trimmed = input.trim()
     if (!trimmed) {
       setError('Enter your name or email to continue.')
+      return
+    }
+
+    if (!password.trim()) {
+      setError('Enter the login password.')
+      return
+    }
+
+    if (password !== '1234') {
+      setError('Incorrect password. The login password is 1234.')
       return
     }
 
@@ -53,6 +64,22 @@ export default function LoginPage({ onLogin }) {
               placeholder="Jane Doe or jane.doe@company.com"
             />
           </label>
+
+          <label className="block text-sm font-medium text-slate-200">
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value)
+                setError('')
+              }}
+              className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
+              placeholder="Enter 1234"
+            />
+          </label>
+
+          <p className="text-xs text-slate-500">Use the internal login password <span className="font-semibold text-slate-200">1234</span>.</p>
 
           {error ? <p className="text-sm text-rose-400">{error}</p> : null}
 
