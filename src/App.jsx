@@ -20,6 +20,11 @@ function App() {
   const [backendError, setBackendError] = useState('')
   const supabaseEnabled = isSupabaseEnabled
 
+  const formatBackendError = (prefix, error) => {
+    if (!error) return prefix
+    return `${prefix} ${error.message || JSON.stringify(error)}`
+  }
+
   const normalizeReservation = (reservation) => ({
     id: reservation.id,
     deskId: reservation.desk_id || reservation.deskId,
@@ -35,7 +40,7 @@ function App() {
         setBackendError('')
         const { data: desksFromDb, error: desksError } = await ensureInitialDesks()
         if (desksError || desksFromDb === null) {
-          setBackendError('Failed to load backend desk configuration. Check Supabase permissions and table setup.')
+          setBackendError(formatBackendError('Failed to load backend desk configuration. Check Supabase permissions and table setup.', desksError))
           return
         }
 
@@ -43,7 +48,7 @@ function App() {
 
         const { data: reservationsFromDb, error: reservationsError } = await fetchReservations()
         if (reservationsError) {
-          setBackendError('Failed to load backend reservations. Check Supabase permissions and table setup.')
+          setBackendError(formatBackendError('Failed to load backend reservations. Check Supabase permissions and table setup.', reservationsError))
           return
         }
 
@@ -100,11 +105,7 @@ function App() {
       setBackendError('')
       const { data: newReservation, error } = await dbCreateReservation(deskId, selectedDate, user)
       if (error) {
-        setBackendError('Failed to create reservation. Check Supabase permissions and table configuration.')
-        return
-      }
-      if (newReservation) {
-        setReservations((prev) => [...prev, normalizeReservation(newReservation)])
+        setBackendError(formatBackendError('Failed to create reservation. Check Supabase permissions and table configuration.', error))
       }
       return
     }
@@ -118,7 +119,7 @@ function App() {
       setBackendError('')
       const { error } = await dbCancelReservation(reservationId, user.id)
       if (error) {
-        setBackendError('Failed to cancel reservation. Check Supabase permissions and table configuration.')
+        setBackendError(formatBackendError('Failed to cancel reservation. Check Supabase permissions and table configuration.', error))
         return
       }
     }
@@ -130,7 +131,7 @@ function App() {
       setBackendError('')
       const { data: created, error } = await dbCreateDesk(desk)
       if (error) {
-        setBackendError('Failed to add desk. Check Supabase permissions and table configuration.')
+        setBackendError(formatBackendError('Failed to add desk. Check Supabase permissions and table configuration.', error))
         return
       }
       if (created) {
@@ -147,7 +148,7 @@ function App() {
       setBackendError('')
       const { error } = await dbRemoveDesk(deskId)
       if (error) {
-        setBackendError('Failed to remove desk. Check Supabase permissions and table configuration.')
+        setBackendError(formatBackendError('Failed to remove desk. Check Supabase permissions and table configuration.', error))
         return
       }
     }
@@ -160,7 +161,7 @@ function App() {
       setBackendError('')
       const { error } = await clearAllReservations()
       if (error) {
-        setBackendError('Failed to clear reservations. Check Supabase permissions and table configuration.')
+        setBackendError(formatBackendError('Failed to clear reservations. Check Supabase permissions and table configuration.', error))
         return
       }
     }
