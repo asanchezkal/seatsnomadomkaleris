@@ -22,6 +22,34 @@ A lightweight React + Vite internal web app for office desk reservations.
 
 - `npm run build`
 
+## Supabase shared backend
+
+This app supports shared reservations via Supabase.
+
+1. Create a new Supabase project.
+2. Add the following tables:
+
+### `desks`
+- `id` text (primary key)
+- `label` text
+
+### `reservations`
+- `id` text (primary key)
+- `desk_id` text
+- `date` text
+- `user_id` text
+- `user_name` text
+- `user_email` text
+- `created_at` timestamp with time zone (optional)
+
+3. In Vercel, set environment variables:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+
+4. Locally, copy `.env.example` to `.env` and fill the values.
+
+The app will use Supabase when those values are available, so reservations will be shared across browsers and devices.
+
 ## Admin Panel
 
 - Password: `office-admin-2026`

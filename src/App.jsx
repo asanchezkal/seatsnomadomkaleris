@@ -4,7 +4,9 @@ import HomePage from './pages/HomePage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
 import useLocalStorage from './hooks/useLocalStorage.js'
 import { loadDesks, loadReservations, saveDesks, saveReservations, setCurrentUser, removeCurrentUser } from './services/storage.js'
-import { getReservationsForDate, createReservation, cancelReservation, canReserve } from './services/reservationService.js'
+import { getReservationsForDate, createReservation as localCreateReservation, cancelReservation as localCancelReservation, canReserve } from './services/reservationService.js'
+import { fetchReservations, ensureInitialDesks, createDesk as dbCreateDesk, removeDesk as dbRemoveDesk, createReservation as dbCreateReservation, cancelReservation as dbCancelReservation, clearAllReservations } from './services/database.js'
+import { isSupabaseEnabled } from './services/supabaseClient.js'
 import { initialDesks } from './data/mockData.js'
 import { todayString } from './utils/dateUtils.js'
 
@@ -15,21 +17,44 @@ function App() {
   const [selectedDate, setSelectedDate] = useLocalStorage('office-seat-reservation-date', todayString())
   const [page, setPage] = useState('home')
   const [adminUnlocked, setAdminUnlocked] = useState(false)
+  const supabaseEnabled = isSupabaseEnabled
+
+  const normalizeReservation = (reservation) => ({
+    id: reservation.id,
+    deskId: reservation.desk_id || reservation.deskId,
+    date: reservation.date,
+    userId: reservation.user_id || reservation.userId,
+    userName: reservation.user_name || reservation.userName,
+    userEmail: reservation.user_email || reservation.userEmail,
+  })
 
   useEffect(() => {
-    setDesks(loadDesks() || initialDesks)
-    setReservations(loadReservations())
-  }, [])
+    async function loadData() {
+      if (supabaseEnabled) {
+        const desksFromDb = await ensureInitialDesks()
+        setDesks(desksFromDb)
+        const reservationsFromDb = await fetchReservations()
+        setReservations(reservationsFromDb.map(normalizeReservation))
+      } else {
+        setDesks(loadDesks() || initialDesks)
+        setReservations(loadReservations())
+      }
+    }
+
+    loadData()
+  }, [supabaseEnabled])
 
   useEffect(() => {
-    if (desks.length) {
+    if (!supabaseEnabled && desks.length) {
       saveDesks(desks)
     }
-  }, [desks])
+  }, [desks, supabaseEnabled])
 
   useEffect(() => {
-    saveReservations(reservations)
-  }, [reservations])
+    if (!supabaseEnabled) {
+      saveReservations(reservations)
+    }
+  }, [reservations, supabaseEnabled])
 
   const dateReservations = useMemo(
     () => getReservationsForDate(reservations, selectedDate),
@@ -49,29 +74,54 @@ function App() {
     setPage('home')
   }
 
-  const handleReservation = (deskId) => {
+  const handleReservation = async (deskId) => {
     if (!user || !canReserve(reservations, selectedDate, deskId, user.id)) {
       return
     }
 
-    const next = createReservation(reservations, deskId, selectedDate, user)
+    if (supabaseEnabled) {
+      const newReservation = await dbCreateReservation(deskId, selectedDate, user)
+      if (newReservation) {
+        setReservations((prev) => [...prev, normalizeReservation(newReservation)])
+      }
+      return
+    }
+
+    const next = localCreateReservation(reservations, deskId, selectedDate, user)
     setReservations(next)
   }
 
-  const handleCancel = (reservationId) => {
-    setReservations(cancelReservation(reservations, reservationId, user.id))
+  const handleCancel = async (reservationId) => {
+    if (supabaseEnabled) {
+      await dbCancelReservation(reservationId, user.id)
+    }
+    setReservations(localCancelReservation(reservations, reservationId, user.id))
   }
 
-  const handleAddDesk = (desk) => {
+  const handleAddDesk = async (desk) => {
+    if (supabaseEnabled) {
+      const created = await dbCreateDesk(desk)
+      if (created) {
+        setDesks((prev) => [...prev, created])
+      }
+      return
+    }
+
     setDesks((prev) => [...prev, desk])
   }
 
-  const handleRemoveDesk = (deskId) => {
+  const handleRemoveDesk = async (deskId) => {
+    if (supabaseEnabled) {
+      await dbRemoveDesk(deskId)
+    }
     setDesks((prev) => prev.filter((desk) => desk.id !== deskId))
     setReservations((prev) => prev.filter((reservation) => reservation.deskId !== deskId))
   }
 
-  const handleClearReservations = () => {
+  const handleClearReservations = async () => {
+    if (supabaseEnabled) {
+      await clearAllReservations()
+    }
     setReservations([])
   }
 
