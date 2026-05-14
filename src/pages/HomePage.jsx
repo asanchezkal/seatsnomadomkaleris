@@ -40,7 +40,7 @@ export default function HomePage({ user, desks, reservations, selectedDate, onDa
                 </span>
               </div>
               {showMapPreview ? (
-                <div className="absolute z-10 mt-4 w-80 rounded-3xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10 sm:w-[520px]">
+                <div className="absolute z-10 mt-4 hidden w-80 rounded-3xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10 md:block sm:w-[520px]">
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Office layout preview</p>
                   <img src={mapImage} alt="Desk map preview" className="mt-3 h-80 w-full rounded-3xl object-cover" />
                 </div>
