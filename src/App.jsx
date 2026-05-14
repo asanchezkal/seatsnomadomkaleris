@@ -17,6 +17,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useLocalStorage('office-seat-reservation-date', todayString())
   const [page, setPage] = useState('home')
   const [adminUnlocked, setAdminUnlocked] = useState(false)
+  const [backendError, setBackendError] = useState('')
   const supabaseEnabled = isSupabaseEnabled
 
   const normalizeReservation = (reservation) => ({
@@ -31,14 +32,27 @@ function App() {
   useEffect(() => {
     async function loadData() {
       if (supabaseEnabled) {
-        const desksFromDb = await ensureInitialDesks()
+        setBackendError('')
+        const { data: desksFromDb, error: desksError } = await ensureInitialDesks()
+        if (desksError || desksFromDb === null) {
+          setBackendError('Failed to load backend desk configuration. Check Supabase permissions and table setup.')
+          return
+        }
+
         setDesks(desksFromDb)
-        const reservationsFromDb = await fetchReservations()
+
+        const { data: reservationsFromDb, error: reservationsError } = await fetchReservations()
+        if (reservationsError) {
+          setBackendError('Failed to load backend reservations. Check Supabase permissions and table setup.')
+          return
+        }
+
         setReservations(reservationsFromDb.map(normalizeReservation))
-      } else {
-        setDesks(loadDesks() || initialDesks)
-        setReservations(loadReservations())
+        return
       }
+
+      setDesks(loadDesks() || initialDesks)
+      setReservations(loadReservations())
     }
 
     loadData()
@@ -83,7 +97,12 @@ function App() {
     }
 
     if (supabaseEnabled) {
-      const newReservation = await dbCreateReservation(deskId, selectedDate, user)
+      setBackendError('')
+      const { data: newReservation, error } = await dbCreateReservation(deskId, selectedDate, user)
+      if (error) {
+        setBackendError('Failed to create reservation. Check Supabase permissions and table configuration.')
+        return
+      }
       if (newReservation) {
         setReservations((prev) => [...prev, normalizeReservation(newReservation)])
       }
@@ -96,14 +115,24 @@ function App() {
 
   const handleCancel = async (reservationId) => {
     if (supabaseEnabled) {
-      await dbCancelReservation(reservationId, user.id)
+      setBackendError('')
+      const { error } = await dbCancelReservation(reservationId, user.id)
+      if (error) {
+        setBackendError('Failed to cancel reservation. Check Supabase permissions and table configuration.')
+        return
+      }
     }
     setReservations(localCancelReservation(reservations, reservationId, user.id))
   }
 
   const handleAddDesk = async (desk) => {
     if (supabaseEnabled) {
-      const created = await dbCreateDesk(desk)
+      setBackendError('')
+      const { data: created, error } = await dbCreateDesk(desk)
+      if (error) {
+        setBackendError('Failed to add desk. Check Supabase permissions and table configuration.')
+        return
+      }
       if (created) {
         setDesks((prev) => [...prev, created])
       }
@@ -115,7 +144,12 @@ function App() {
 
   const handleRemoveDesk = async (deskId) => {
     if (supabaseEnabled) {
-      await dbRemoveDesk(deskId)
+      setBackendError('')
+      const { error } = await dbRemoveDesk(deskId)
+      if (error) {
+        setBackendError('Failed to remove desk. Check Supabase permissions and table configuration.')
+        return
+      }
     }
     setDesks((prev) => prev.filter((desk) => desk.id !== deskId))
     setReservations((prev) => prev.filter((reservation) => reservation.deskId !== deskId))
@@ -123,7 +157,12 @@ function App() {
 
   const handleClearReservations = async () => {
     if (supabaseEnabled) {
-      await clearAllReservations()
+      setBackendError('')
+      const { error } = await clearAllReservations()
+      if (error) {
+        setBackendError('Failed to clear reservations. Check Supabase permissions and table configuration.')
+        return
+      }
     }
     setReservations([])
   }
@@ -145,6 +184,11 @@ function App() {
             <p className="mt-2 rounded-3xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 shadow-sm">
               {backendStatus}
             </p>
+            {backendError ? (
+              <div className="mt-4 rounded-3xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm">
+                {backendError}
+              </div>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <button
