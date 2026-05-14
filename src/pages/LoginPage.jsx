@@ -1,9 +1,9 @@
 import { useState } from 'react'
 
 const defaultUsers = [
-  { id: 'jane.doe', name: 'Jane Doe', email: 'jane.doe@company.com' },
-  { id: 'mark.tan', name: 'Mark Tan', email: 'mark.tan@company.com' },
-  { id: 'alex.kim', name: 'Alex Kim', email: 'alex.kim@company.com' },
+  { id: 'jane.doe', name: 'Jane Doe', email: 'jane.doe@kaleris.com' },
+  { id: 'mark.tan', name: 'Mark Tan', email: 'mark.tan@kaleris.com' },
+  { id: 'alex.kim', name: 'Alex Kim', email: 'alex.kim@kaleris.com' },
 ]
 
 export default function LoginPage({ onLogin }) {
@@ -20,12 +20,18 @@ export default function LoginPage({ onLogin }) {
     }
 
     if (!password.trim()) {
-      setError('Enter the login password.')
+      setError('Enter password to continue.')
+      return
+    }
+
+    const isEmail = trimmed.includes('@')
+    if (isEmail && !trimmed.toLowerCase().endsWith('@kaleris.com')) {
+      setError('Email must end with @kaleris.com.')
       return
     }
 
     if (password !== '1234') {
-      setError('Incorrect password. The login password is 1234.')
+      setError('Incorrect password.')
       return
     }
 
@@ -36,7 +42,7 @@ export default function LoginPage({ onLogin }) {
     const profile = existing || {
       id: trimmed.toLowerCase().replace(/\s+/g, '.'),
       name: trimmed,
-      email: trimmed.includes('@') ? trimmed : `${trimmed.replace(/\s+/g, '.')}@company.com`,
+      email: trimmed.includes('@') ? trimmed : `${trimmed.replace(/\s+/g, '.')}@kaleris.com`,
     }
 
     onLogin(profile)
@@ -75,11 +81,9 @@ export default function LoginPage({ onLogin }) {
                 setError('')
               }}
               className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
-              placeholder="Enter 1234"
+              placeholder="Enter password"
             />
           </label>
-
-          <p className="text-xs text-slate-500">Use the internal login password <span className="font-semibold text-slate-200">1234</span>.</p>
 
           {error ? <p className="text-sm text-rose-400">{error}</p> : null}
 
