@@ -22,7 +22,7 @@ export function canReserve(reservations, date, deskId, userId) {
 
 export function createReservation(reservations, deskId, date, user) {
   const reservation = {
-    id: `${deskId}-${date}-${user.id}`,
+    id: `${deskId}-${date}-${user.id}-${Date.now()}`,
     deskId,
     date,
     userId: user.id,

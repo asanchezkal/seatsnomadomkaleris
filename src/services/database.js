@@ -52,7 +52,7 @@ export async function removeDesk(deskId) {
 }
 
 export async function createReservation(deskId, date, user) {
-  const id = `${deskId}-${date}-${user.id}`
+  const id = `${deskId}-${date}-${user.id}-${Date.now()}`
   const reservation = {
     id,
     desk_id: deskId,
