@@ -48,7 +48,9 @@ This app supports shared reservations via Supabase.
 
 4. Locally, copy `.env.example` to `.env` and fill the values.
 
-The app will use Supabase when those values are available, so reservations will be shared across browsers and devices.
+> Important: Without these Supabase variables, the app will run in local-only mode and reservations will not be shared across browsers or locations.
+
+The app will use Supabase when those values are available, so desks and reservations are shared across browsers and devices.
 
 ## Admin Panel
 

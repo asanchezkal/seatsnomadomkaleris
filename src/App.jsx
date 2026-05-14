@@ -60,6 +60,9 @@ function App() {
     () => getReservationsForDate(reservations, selectedDate),
     [reservations, selectedDate],
   )
+  const backendStatus = supabaseEnabled
+    ? 'Shared backend active — reservations are stored centrally for all browsers.'
+    : 'Local-only mode: Supabase is not configured, so changes are stored only in this browser.'
 
   const handleLogin = (profile) => {
     setUser(profile)
@@ -138,6 +141,9 @@ function App() {
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Desk booking dashboard</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
               Reserve a seat, manage your upcoming desk bookings, and keep your office schedule clear.
+            </p>
+            <p className="mt-2 rounded-3xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 shadow-sm">
+              {backendStatus}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
