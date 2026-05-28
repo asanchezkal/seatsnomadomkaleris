@@ -18,6 +18,7 @@ function App() {
   const [page, setPage] = useState('home')
   const [adminUnlocked, setAdminUnlocked] = useState(false)
   const [backendError, setBackendError] = useState('')
+  const [isProcessing, setIsProcessing] = useState(false)
   const supabaseEnabled = isSupabaseEnabled
 
   const formatBackendError = (prefix, error) => {
@@ -97,21 +98,31 @@ function App() {
   }
 
   const handleReservation = async (deskId) => {
-    if (!user || !canReserve(reservations, selectedDate, deskId, user.id)) {
+    if (!user || !canReserve(reservations, selectedDate, deskId, user.id) || isProcessing) {
       return
     }
-
+    setIsProcessing(true)
     if (supabaseEnabled) {
       setBackendError('')
       const { data: newReservation, error } = await dbCreateReservation(deskId, selectedDate, user)
       if (error) {
         setBackendError(formatBackendError('Failed to create reservation. Check Supabase permissions and table configuration.', error))
+        setIsProcessing(false)
+        return
       }
+      // Refrescar reservas desde backend tras reservar
+      const { data: reservationsFromDb, error: reservationsError } = await fetchReservations()
+      if (reservationsError) {
+        setBackendError(formatBackendError('Failed to reload reservations after booking.', reservationsError))
+      } else {
+        setReservations(reservationsFromDb.map(normalizeReservation))
+      }
+      setIsProcessing(false)
       return
     }
-
     const next = localCreateReservation(reservations, deskId, selectedDate, user)
     setReservations(next)
+    setIsProcessing(false)
   }
 
   const handleCancel = async (reservationId) => {
@@ -185,6 +196,11 @@ function App() {
             <p className="mt-2 rounded-3xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 shadow-sm">
               {backendStatus}
             </p>
+            {isProcessing ? (
+              <div className="mt-4 rounded-3xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 shadow-sm">
+                Processing reservation...
+              </div>
+            ) : null}
             {backendError ? (
               <div className="mt-4 rounded-3xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm">
                 {backendError}

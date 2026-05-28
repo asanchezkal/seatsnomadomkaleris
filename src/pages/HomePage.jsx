@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import DeskCard from '../components/DeskCard.jsx'
 import DatePicker from '../components/DatePicker.jsx'
 import ReservationSummary from '../components/ReservationSummary.jsx'
 import DeskFilter from '../components/DeskFilter.jsx'
 import { getReservationByDesk, getUserReservations } from '../services/reservationService.js'
 
-const seatMapImage = new URL('../assets/seatmapdistribution.png', import.meta.url).href
+const seatMapImage = '/media/setmapdistribution.png'
 const configSeatImage = new URL('../assets/configseatkaleris.png', import.meta.url).href
 
 export default function HomePage({ user, desks, reservations, selectedDate, onDateChange, onReserve, onCancel, dateReservations }) {
@@ -22,6 +22,24 @@ export default function HomePage({ user, desks, reservations, selectedDate, onDa
     [dateReservations, user.id],
   )
   const [showMapPreview, setShowMapPreview] = useState(false)
+  const [showMapOverlay, setShowMapOverlay] = useState(false)
+  const mapOverlayRef = useRef(null)
+
+  // Cerrar overlay al tocar fuera en móvil
+  useEffect(() => {
+    if (!showMapOverlay) return
+    function handleClick(e) {
+      if (mapOverlayRef.current && !mapOverlayRef.current.contains(e.target)) {
+        setShowMapOverlay(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('touchstart', handleClick)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('touchstart', handleClick)
+    }
+  }, [showMapOverlay])
   const isKalerisUser = user?.email?.toLowerCase().endsWith('@kaleris.com')
 
   return (
@@ -33,15 +51,18 @@ export default function HomePage({ user, desks, reservations, selectedDate, onDa
               <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Today</p>
               <div
                 className="mt-2 inline-flex items-center gap-2"
-                onMouseEnter={() => setShowMapPreview(true)}
-                onMouseLeave={() => setShowMapPreview(false)}
+                onMouseEnter={() => window.innerWidth >= 768 && setShowMapPreview(true)}
+                onMouseLeave={() => window.innerWidth >= 768 && setShowMapPreview(false)}
+                onClick={() => setShowMapOverlay((v) => !v)}
+                style={{ cursor: 'pointer' }}
               >
                 <h2 className="text-2xl font-semibold text-slate-950">Desk map</h2>
                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-100">
                   i
                 </span>
               </div>
-              {showMapPreview ? (
+              {/* Desktop hover preview */}
+              {showMapPreview && window.innerWidth >= 768 ? (
                 <div className="absolute z-10 mt-4 hidden w-80 rounded-3xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 md:block md:w-[560px]">
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Kaleris seat plan</p>
                   <div className="mt-3 grid gap-3 lg:grid-cols-2">
@@ -61,6 +82,27 @@ export default function HomePage({ user, desks, reservations, selectedDate, onDa
                   ) : null}
                 </div>
               ) : null}
+              {/* Mobile overlay */}
+              {showMapOverlay && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" style={{ backdropFilter: 'blur(2px)' }}>
+                  <div ref={mapOverlayRef} className="relative w-[95vw] max-w-md rounded-3xl bg-white p-4 shadow-xl flex flex-col items-center">
+                    <button
+                      className="absolute top-2 right-2 text-slate-500 hover:text-slate-900 text-2xl font-bold"
+                      onClick={() => setShowMapOverlay(false)}
+                      aria-label="Close map"
+                    >
+                      ×
+                    </button>
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Kaleris seat plan</p>
+                    <img src={seatMapImage} alt="Desk map preview" className="w-full max-h-[60vh] object-contain rounded-2xl" />
+                    {!isKalerisUser ? (
+                      <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                        Seat map preview is available only to @kaleris.com employees.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              )}
               <p className="mt-3 text-sm text-slate-600">Reserve a desk for the selected day and manage your schedule.</p>
             </div>
             <DatePicker value={selectedDate} onChange={onDateChange} />

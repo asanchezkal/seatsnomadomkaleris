@@ -8,8 +8,11 @@ export default function AdminPage({ desks, reservations, onAddDesk, onRemoveDesk
   const [deskInput, setDeskInput] = useState('')
   const [error, setError] = useState('')
 
+  const today = todayString()
   const upcomingReservations = useMemo(() => {
-    return reservations.slice().sort((a, b) => a.date.localeCompare(b.date))
+    return reservations
+      .filter((reservation) => reservation.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))
   }, [reservations])
 
   const handleUnlock = () => {

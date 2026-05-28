@@ -6,9 +6,12 @@ export function getReservationByDesk(reservations, date, deskId) {
   return reservations.find((reservation) => reservation.date === date && reservation.deskId === deskId)
 }
 
+import { todayString } from '../utils/dateUtils.js'
+
 export function getUserReservations(reservations, userId) {
+  const today = todayString()
   return reservations
-    .filter((reservation) => reservation.userId === userId)
+    .filter((reservation) => reservation.userId === userId && reservation.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 
