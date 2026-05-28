@@ -6,7 +6,6 @@ import DeskFilter from '../components/DeskFilter.jsx'
 import { getReservationByDesk, getUserReservations } from '../services/reservationService.js'
 
 const seatMapImage = '/media/setmapdistribution.png'
-const configSeatImage = new URL('../assets/configseatkaleris.png', import.meta.url).href
 
 export default function HomePage({ user, desks, reservations, selectedDate, onDateChange, onReserve, onCancel, dateReservations }) {
   const [search, setSearch] = useState('')
@@ -65,15 +64,9 @@ export default function HomePage({ user, desks, reservations, selectedDate, onDa
               {showMapPreview && window.innerWidth >= 768 ? (
                 <div className="absolute z-10 mt-4 hidden w-80 rounded-3xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 md:block md:w-[560px]">
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Kaleris seat plan</p>
-                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                    <div>
-                      <p className="mb-2 text-sm font-semibold text-slate-700">Seat map</p>
-                      <img src={seatMapImage} alt="Desk map preview" className="h-72 w-full rounded-3xl object-cover" />
-                    </div>
-                    <div>
-                      <p className="mb-2 text-sm font-semibold text-slate-700">Available seat configuration</p>
-                      <img src={configSeatImage} alt="Available seat configuration" className="h-72 w-full rounded-3xl object-cover" />
-                    </div>
+                  <div className="mt-3">
+                    <p className="mb-2 text-sm font-semibold text-slate-700">Seat map</p>
+                    <img src={seatMapImage} alt="Desk map preview" className="w-full rounded-3xl object-contain max-h-[72vh]" />
                   </div>
                   {!isKalerisUser ? (
                     <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
