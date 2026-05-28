@@ -5,7 +5,7 @@ import ReservationSummary from '../components/ReservationSummary.jsx'
 import DeskFilter from '../components/DeskFilter.jsx'
 import { getReservationByDesk, getUserReservations } from '../services/reservationService.js'
 
-const seatMapImage = new URL('../../media/setmapdistribution.png', import.meta.url).href
+const seatMapImage = new URL('../../media/seatmapdistribution.png', import.meta.url).href
 
 export default function HomePage({ user, desks, reservations, selectedDate, onDateChange, onReserve, onCancel, dateReservations }) {
   const [search, setSearch] = useState('')
