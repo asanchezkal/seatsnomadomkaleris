@@ -1,51 +1,30 @@
 import { useState } from 'react'
 
-const defaultUsers = [
-  { id: 'jane.doe', name: 'Jane Doe', email: 'jane.doe@kaleris.com' },
-  { id: 'mark.tan', name: 'Mark Tan', email: 'mark.tan@kaleris.com' },
-  { id: 'alex.kim', name: 'Alex Kim', email: 'alex.kim@kaleris.com' },
-]
-
 export default function LoginPage({ onLogin }) {
-  const [input, setInput] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    const trimmed = input.trim()
-    if (!trimmed) {
-      setError('Enter your name or email to continue.')
+    const trimmedEmail = email.trim().toLowerCase()
+    if (!trimmedEmail) {
+      setError('Enter your email to continue.')
       return
     }
-
-    if (!password.trim()) {
-      setError('Enter password to continue.')
-      return
-    }
-
-    const isEmail = trimmed.includes('@')
-    if (isEmail && !trimmed.toLowerCase().endsWith('@kaleris.com')) {
+    if (!trimmedEmail.endsWith('@kaleris.com')) {
       setError('Email must end with @kaleris.com.')
       return
     }
-
-    if (password !== '1234') {
-      setError('Incorrect password.')
+    if (!password) {
+      setError('Enter your password to continue.')
       return
     }
-
-    const existing = defaultUsers.find(
-      (user) => user.name.toLowerCase() === trimmed.toLowerCase() || user.email.toLowerCase() === trimmed.toLowerCase(),
-    )
-
-    const profile = existing || {
-      id: trimmed.toLowerCase().replace(/\s+/g, '.'),
-      name: trimmed,
-      email: trimmed.includes('@') ? trimmed : `${trimmed.replace(/\s+/g, '.')}@kaleris.com`,
-    }
-
-    onLogin(profile)
+    setLoading(true)
+    const errorMsg = await onLogin(trimmedEmail, password)
+    setLoading(false)
+    if (errorMsg) setError(errorMsg)
   }
 
   return (
@@ -54,20 +33,22 @@ export default function LoginPage({ onLogin }) {
         <div className="mb-8 text-center">
           <p className="text-sm uppercase tracking-[0.3em] text-sky-400">Internal tool</p>
           <h1 className="mt-3 text-3xl font-semibold text-white">Office Desk Reservations</h1>
-          <p className="mt-2 text-sm text-slate-300">Sign in with your email or username to reserve a desk for today.</p>
+          <p className="mt-2 text-sm text-slate-300">Sign in with your Kaleris email and password.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block text-sm font-medium text-slate-200">
-            Username or email
+            Email
             <input
-              value={input}
+              type="email"
+              value={email}
               onChange={(event) => {
-                setInput(event.target.value)
+                setEmail(event.target.value)
                 setError('')
               }}
               className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
-              placeholder="Jane Doe or jane.doe@company.com"
+              placeholder="jane.doe@kaleris.com"
+              autoComplete="email"
             />
           </label>
 
@@ -82,6 +63,7 @@ export default function LoginPage({ onLogin }) {
               }}
               className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
               placeholder="Enter password"
+              autoComplete="current-password"
             />
           </label>
 
@@ -89,20 +71,12 @@ export default function LoginPage({ onLogin }) {
 
           <button
             type="submit"
-            className="w-full rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:bg-sky-400"
+            disabled={loading}
+            className="w-full rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:bg-sky-400 disabled:opacity-60"
           >
-            Continue
+            {loading ? 'Signing in…' : 'Continue'}
           </button>
         </form>
-
-        <div className="mt-8 rounded-3xl bg-slate-900/80 p-4 text-sm text-slate-400 ring-1 ring-white/5">
-          <p className="font-medium text-slate-100">Example accounts</p>
-          <ul className="mt-2 space-y-1">
-            {defaultUsers.map((user) => (
-              <li key={user.id}>{user.name} — {user.email}</li>
-            ))}
-          </ul>
-        </div>
       </div>
     </div>
   )
