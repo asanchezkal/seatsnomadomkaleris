@@ -5,10 +5,11 @@ import AdminPage from './pages/AdminPage.jsx'
 import useLocalStorage from './hooks/useLocalStorage.js'
 import { loadDesks, loadReservations, saveDesks, saveReservations, setCurrentUser, removeCurrentUser } from './services/storage.js'
 import { getReservationsForDate, createReservation as localCreateReservation, cancelReservation as localCancelReservation, canReserve } from './services/reservationService.js'
-import { fetchReservations, ensureInitialDesks, createDesk as dbCreateDesk, removeDesk as dbRemoveDesk, createReservation as dbCreateReservation, cancelReservation as dbCancelReservation, clearAllReservations } from './services/database.js'
+import { fetchReservations, ensureInitialDesks, createDesk as dbCreateDesk, removeDesk as dbRemoveDesk, createReservation as dbCreateReservation, cancelReservation as dbCancelReservation, clearAllReservations, fetchUsers, createUser as dbCreateUser, deleteUser as dbDeleteUser, updateUserPassword as dbUpdateUserPassword, validateUser } from './services/database.js'
 import { isSupabaseEnabled } from './services/supabaseClient.js'
 import { initialDesks } from './data/mockData.js'
 import { todayString } from './utils/dateUtils.js'
+import { deriveNameFromEmail } from './utils/userUtils.js'
 
 function App() {
   const [user, setUser] = useLocalStorage('office-seat-reservation-user', null)
@@ -19,6 +20,7 @@ function App() {
   const [adminUnlocked, setAdminUnlocked] = useState(false)
   const [backendError, setBackendError] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [users, setUsers] = useState([])
   const supabaseEnabled = isSupabaseEnabled
 
   const formatBackendError = (prefix, error) => {
@@ -54,6 +56,13 @@ function App() {
         }
 
         setReservations(reservationsFromDb.map(normalizeReservation))
+
+        const { data: usersFromDb, error: usersError } = await fetchUsers()
+        if (usersError) {
+          setBackendError(formatBackendError('Failed to load users.', usersError))
+          return
+        }
+        setUsers(usersFromDb)
         return
       }
 
@@ -84,10 +93,23 @@ function App() {
     ? 'Shared backend active — reservations are stored centrally for all browsers.'
     : 'Local-only mode: Supabase is not configured, so changes are stored only in this browser.'
 
-  const handleLogin = (profile) => {
+  const handleLogin = async (email, password) => {
+    if (supabaseEnabled) {
+      const { data: userRow, error } = await validateUser(email, password)
+      if (error) return 'Login failed. Please try again.'
+      if (!userRow) return 'Email or password is incorrect.'
+      const profile = { id: email, name: deriveNameFromEmail(email), email }
+      setUser(profile)
+      setCurrentUser(profile)
+      setPage('home')
+      return null
+    }
+    if (password !== '1234') return 'Email or password is incorrect.'
+    const profile = { id: email, name: deriveNameFromEmail(email), email }
     setUser(profile)
     setCurrentUser(profile)
     setPage('home')
+    return null
   }
 
   const handleLogout = () => {
@@ -179,6 +201,39 @@ function App() {
     setReservations([])
   }
 
+  const handleAddUser = async (email, password) => {
+    if (!supabaseEnabled) return
+    setBackendError('')
+    const { error } = await dbCreateUser(email, password)
+    if (error) {
+      setBackendError(formatBackendError('Failed to add user.', error))
+      return
+    }
+    setUsers((prev) => [...prev, { email, password }].sort((a, b) => a.email.localeCompare(b.email)))
+  }
+
+  const handleRemoveUser = async (email) => {
+    if (!supabaseEnabled) return
+    setBackendError('')
+    const { error } = await dbDeleteUser(email)
+    if (error) {
+      setBackendError(formatBackendError('Failed to remove user.', error))
+      return
+    }
+    setUsers((prev) => prev.filter((u) => u.email !== email))
+  }
+
+  const handleUpdateUserPassword = async (email, newPassword) => {
+    if (!supabaseEnabled) return
+    setBackendError('')
+    const { error } = await dbUpdateUserPassword(email, newPassword)
+    if (error) {
+      setBackendError(formatBackendError('Failed to update password.', error))
+      return
+    }
+    setUsers((prev) => prev.map((u) => (u.email === email ? { ...u, password: newPassword } : u)))
+  }
+
   if (!user) {
     return <LoginPage onLogin={handleLogin} />
   }
@@ -237,9 +292,13 @@ function App() {
             user={user}
             desks={desks}
             reservations={reservations}
+            users={users}
             onAddDesk={handleAddDesk}
             onRemoveDesk={handleRemoveDesk}
             onClearReservations={handleClearReservations}
+            onAddUser={handleAddUser}
+            onRemoveUser={handleRemoveUser}
+            onUpdateUserPassword={handleUpdateUserPassword}
             adminUnlocked={adminUnlocked}
             setAdminUnlocked={setAdminUnlocked}
           />
