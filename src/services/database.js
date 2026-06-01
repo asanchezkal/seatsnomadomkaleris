@@ -3,6 +3,7 @@ import { initialDesks } from '../data/mockData.js'
 
 const DESK_TABLE = 'desks'
 const RESERVATION_TABLE = 'reservations'
+const USER_TABLE = 'users'
 
 const logSupabaseError = (message, error) => {
   if (error) {
@@ -82,4 +83,39 @@ export async function clearAllReservations() {
   const { error } = await supabase.from(RESERVATION_TABLE).delete().neq('id', '')
   logSupabaseError('Error clearing reservations', error)
   return { error }
+}
+
+export async function fetchUsers() {
+  const { data, error } = await supabase.from(USER_TABLE).select('*').order('email', { ascending: true })
+  logSupabaseError('Error fetching users', error)
+  return { data: data || [], error }
+}
+
+export async function createUser(email, password) {
+  const { data, error } = await supabase.from(USER_TABLE).insert({ email, password }).select()
+  logSupabaseError('Error creating user', error)
+  return { data: data?.[0] || null, error }
+}
+
+export async function deleteUser(email) {
+  const { error } = await supabase.from(USER_TABLE).delete().eq('email', email)
+  logSupabaseError('Error deleting user', error)
+  return { error }
+}
+
+export async function updateUserPassword(email, newPassword) {
+  const { error } = await supabase.from(USER_TABLE).update({ password: newPassword }).eq('email', email)
+  logSupabaseError('Error updating user password', error)
+  return { error }
+}
+
+export async function validateUser(email, password) {
+  const { data, error } = await supabase
+    .from(USER_TABLE)
+    .select('*')
+    .eq('email', email)
+    .eq('password', password)
+    .maybeSingle()
+  logSupabaseError('Error validating user', error)
+  return { data: data || null, error }
 }
