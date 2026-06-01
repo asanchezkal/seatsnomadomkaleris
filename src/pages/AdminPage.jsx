@@ -12,6 +12,7 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
   const [userFormError, setUserFormError] = useState('')
   const [editingUserEmail, setEditingUserEmail] = useState(null)
   const [editPasswordInput, setEditPasswordInput] = useState('')
+  const [editPasswordError, setEditPasswordError] = useState('')
 
   const today = todayString()
   const upcomingReservations = useMemo(() => {
@@ -38,12 +39,12 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
 
   const handleAddUser = () => {
     const email = userEmailInput.trim().toLowerCase()
-    const password = userPasswordInput.trim()
+    const newUserPassword = userPasswordInput.trim()
     if (!email.endsWith('@kaleris.com')) {
       setUserFormError('Email must end with @kaleris.com.')
       return
     }
-    if (!password) {
+    if (!newUserPassword) {
       setUserFormError('Password cannot be empty.')
       return
     }
@@ -52,14 +53,18 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
       return
     }
     setUserFormError('')
-    onAddUser(email, password)
+    onAddUser(email, newUserPassword)
     setUserEmailInput('')
     setUserPasswordInput('')
   }
 
   const handleSavePassword = (email) => {
     const newPassword = editPasswordInput.trim()
-    if (!newPassword) return
+    if (!newPassword) {
+      setEditPasswordError('Password cannot be empty.')
+      return
+    }
+    setEditPasswordError('')
     onUpdateUserPassword(email, newPassword)
     setEditingUserEmail(null)
     setEditPasswordInput('')
@@ -161,6 +166,7 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
             />
             <input
+              type="password"
               value={userPasswordInput}
               onChange={(e) => { setUserPasswordInput(e.target.value); setUserFormError('') }}
               placeholder="Password"
@@ -193,7 +199,7 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => { setEditingUserEmail(u.email); setEditPasswordInput('') }}
+                      onClick={() => { setEditingUserEmail(u.email); setEditPasswordInput(''); setEditPasswordError('') }}
                       className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
                     >
                       Change password
@@ -208,27 +214,31 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
                   </div>
                 </div>
                 {editingUserEmail === u.email ? (
-                  <div className="mt-3 flex gap-3">
+                  <div className="mt-3 flex flex-col gap-3">
                     <input
+                      type="password"
                       value={editPasswordInput}
                       onChange={(e) => setEditPasswordInput(e.target.value)}
                       placeholder="New password"
                       className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-slate-900 outline-none"
                     />
-                    <button
-                      type="button"
-                      onClick={() => handleSavePassword(u.email)}
-                      className="rounded-2xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingUserEmail(null)}
-                      className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                    >
-                      Cancel
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleSavePassword(u.email)}
+                        className="rounded-2xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setEditingUserEmail(null); setEditPasswordError('') }}
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {editPasswordError ? <p className="mt-1 text-xs text-rose-500">{editPasswordError}</p> : null}
                   </div>
                 ) : null}
               </div>
