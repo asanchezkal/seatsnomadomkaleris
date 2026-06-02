@@ -3,15 +3,37 @@ import { todayString } from '../utils/dateUtils.js'
 
 const ADMIN_PASSWORD = 'office-admin-2026'
 
+function EyeIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function EyeOffIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  )
+}
+
 export default function AdminPage({ desks, reservations, users, onAddDesk, onRemoveDesk, onClearReservations, adminUnlocked, setAdminUnlocked, onAddUser, onRemoveUser, onUpdateUserPassword }) {
   const [password, setPassword] = useState('')
+  const [showAdminPassword, setShowAdminPassword] = useState(false)
   const [deskInput, setDeskInput] = useState('')
   const [error, setError] = useState('')
   const [userEmailInput, setUserEmailInput] = useState('')
   const [userPasswordInput, setUserPasswordInput] = useState('')
+  const [showUserPassword, setShowUserPassword] = useState(false)
   const [userFormError, setUserFormError] = useState('')
   const [editingUserEmail, setEditingUserEmail] = useState(null)
   const [editPasswordInput, setEditPasswordInput] = useState('')
+  const [showEditPassword, setShowEditPassword] = useState(false)
   const [editPasswordError, setEditPasswordError] = useState('')
 
   const today = todayString()
@@ -56,6 +78,7 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
     onAddUser(email, newUserPassword)
     setUserEmailInput('')
     setUserPasswordInput('')
+    setShowUserPassword(false)
   }
 
   const handleSavePassword = (email) => {
@@ -68,6 +91,7 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
     onUpdateUserPassword(email, newPassword)
     setEditingUserEmail(null)
     setEditPasswordInput('')
+    setShowEditPassword(false)
   }
 
   if (!adminUnlocked) {
@@ -77,13 +101,23 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
         <p className="mt-2 text-sm text-slate-600">Enter the admin password to manage desks and reservations.</p>
 
         <div className="mt-6 max-w-md space-y-4">
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Admin password"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
-          />
+          <div className="relative">
+            <input
+              type={showAdminPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Admin password"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
+            />
+            <button
+              type="button"
+              onClick={() => setShowAdminPassword((prev) => !prev)}
+              tabIndex={-1}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+            >
+              {showAdminPassword ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+          </div>
           {error ? <p className="text-sm text-rose-500">{error}</p> : null}
           <button
             type="button"
@@ -165,13 +199,23 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
               placeholder="jane.doe@kaleris.com"
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
             />
-            <input
-              type="password"
-              value={userPasswordInput}
-              onChange={(e) => { setUserPasswordInput(e.target.value); setUserFormError('') }}
-              placeholder="Password"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none sm:w-40"
-            />
+            <div className="relative sm:w-40">
+              <input
+                type={showUserPassword ? 'text' : 'password'}
+                value={userPasswordInput}
+                onChange={(e) => { setUserPasswordInput(e.target.value); setUserFormError('') }}
+                placeholder="Password"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-900 outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowUserPassword((prev) => !prev)}
+                tabIndex={-1}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+              >
+                {showUserPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
             <button
               type="button"
               onClick={handleAddUser}
@@ -199,7 +243,7 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => { setEditingUserEmail(u.email); setEditPasswordInput(''); setEditPasswordError('') }}
+                      onClick={() => { setEditingUserEmail(u.email); setEditPasswordInput(''); setEditPasswordError(''); setShowEditPassword(false) }}
                       className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
                     >
                       Change password
@@ -215,13 +259,23 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
                 </div>
                 {editingUserEmail === u.email ? (
                   <div className="mt-3 flex flex-col gap-3">
-                    <input
-                      type="password"
-                      value={editPasswordInput}
-                      onChange={(e) => setEditPasswordInput(e.target.value)}
-                      placeholder="New password"
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-slate-900 outline-none"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showEditPassword ? 'text' : 'password'}
+                        value={editPasswordInput}
+                        onChange={(e) => setEditPasswordInput(e.target.value)}
+                        placeholder="New password"
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 pr-10 text-slate-900 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowEditPassword((prev) => !prev)}
+                        tabIndex={-1}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                      >
+                        {showEditPassword ? <EyeOffIcon /> : <EyeIcon />}
+                      </button>
+                    </div>
                     <div className="flex gap-3">
                       <button
                         type="button"
@@ -232,7 +286,7 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setEditingUserEmail(null); setEditPasswordError('') }}
+                        onClick={() => { setEditingUserEmail(null); setEditPasswordError(''); setShowEditPassword(false) }}
                         className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                       >
                         Cancel
