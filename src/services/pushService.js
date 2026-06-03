@@ -10,6 +10,7 @@ export function urlBase64ToUint8Array(base64String) {
 }
 
 export async function subscribeToPushNotifications(email) {
+  if (!supabase) return
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
   if (!VAPID_PUBLIC_KEY) return
 

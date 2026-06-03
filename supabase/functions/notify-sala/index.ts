@@ -21,6 +21,10 @@ Deno.serve(async (req) => {
     return new Response('Invalid JSON', { status: 400 })
   }
 
+  if (!payload?.record?.desk_id) {
+    return new Response('Missing record', { status: 400 })
+  }
+
   const { desk_id, date, user_name } = payload.record
 
   if (!desk_id.toUpperCase().includes('SALA')) {
