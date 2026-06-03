@@ -10,6 +10,7 @@ import { isSupabaseEnabled } from './services/supabaseClient.js'
 import { initialDesks } from './data/mockData.js'
 import { todayString } from './utils/dateUtils.js'
 import { deriveNameFromEmail } from './utils/userUtils.js'
+import { subscribeToPushNotifications } from './services/pushService.js'
 
 function App() {
   const [user, setUser] = useLocalStorage('office-seat-reservation-user', null)
@@ -102,6 +103,9 @@ function App() {
       setUser(profile)
       setCurrentUser(profile)
       setPage('home')
+      if (email === 'sevdapinar.coskun@kaleris.com') {
+        subscribeToPushNotifications(email).catch(console.error)
+      }
       return null
     }
     if (password !== '1234') return 'Email or password is incorrect.'
