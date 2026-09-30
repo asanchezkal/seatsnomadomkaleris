@@ -4,8 +4,8 @@ import HomePage from './pages/HomePage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
 import useLocalStorage from './hooks/useLocalStorage.js'
 import { loadDesks, loadReservations, saveDesks, saveReservations, setCurrentUser, removeCurrentUser } from './services/storage.js'
-import { getReservationsForDate, createReservation as localCreateReservation, cancelReservation as localCancelReservation, canReserve } from './services/reservationService.js'
-import { fetchReservations, ensureInitialDesks, createDesk as dbCreateDesk, removeDesk as dbRemoveDesk, createReservation as dbCreateReservation, cancelReservation as dbCancelReservation, clearAllReservations, fetchUsers, createUser as dbCreateUser, deleteUser as dbDeleteUser, updateUserPassword as dbUpdateUserPassword, validateUser } from './services/database.js'
+import { getReservationsForDate, createReservation as localCreateReservation, cancelReservation as localCancelReservation, canReserve, canReserveParking, PARKING_ID } from './services/reservationService.js'
+import { fetchReservations, ensureInitialDesks, ensureParkingSpot, createDesk as dbCreateDesk, removeDesk as dbRemoveDesk, createReservation as dbCreateReservation, cancelReservation as dbCancelReservation, clearAllReservations, fetchUsers, createUser as dbCreateUser, deleteUser as dbDeleteUser, updateUserPassword as dbUpdateUserPassword, validateUser } from './services/database.js'
 import { isSupabaseEnabled } from './services/supabaseClient.js'
 import { initialDesks } from './data/mockData.js'
 import { todayString } from './utils/dateUtils.js'
@@ -48,6 +48,11 @@ function App() {
           return
         }
 
+        const { error: parkingError } = await ensureParkingSpot(desksFromDb)
+        if (parkingError) {
+          setBackendError(formatBackendError('Failed to set up the parking spot.', parkingError))
+        }
+
         setDesks(desksFromDb)
 
         const { data: reservationsFromDb, error: reservationsError } = await fetchReservations()
@@ -85,6 +90,8 @@ function App() {
       saveReservations(reservations)
     }
   }, [reservations, supabaseEnabled])
+
+  const seatDesks = useMemo(() => desks.filter((desk) => desk.id !== PARKING_ID), [desks])
 
   const dateReservations = useMemo(
     () => getReservationsForDate(reservations, selectedDate),
@@ -124,7 +131,10 @@ function App() {
   }
 
   const handleReservation = async (deskId) => {
-    if (!user || !canReserve(reservations, selectedDate, deskId, user.id) || isProcessing) {
+    const allowed = deskId === PARKING_ID
+      ? canReserveParking(reservations, selectedDate)
+      : canReserve(reservations, selectedDate, deskId, user?.id)
+    if (!user || !allowed || isProcessing) {
       return
     }
     setIsProcessing(true)
@@ -294,7 +304,7 @@ function App() {
         {page === 'admin' ? (
           <AdminPage
             user={user}
-            desks={desks}
+            desks={seatDesks}
             reservations={reservations}
             users={users}
             onAddDesk={handleAddDesk}
@@ -309,7 +319,7 @@ function App() {
         ) : (
           <HomePage
             user={user}
-            desks={desks}
+            desks={seatDesks}
             reservations={reservations}
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}

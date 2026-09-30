@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { todayString } from '../utils/dateUtils.js'
+import { PARKING_ID, getReservationLabel } from '../services/reservationService.js'
 
 const ADMIN_PASSWORD = 'office-admin-2026'
 
@@ -54,7 +55,7 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
 
   const handleAddDesk = () => {
     const id = deskInput.trim().toUpperCase()
-    if (!id) return
+    if (!id || id === PARKING_ID) return
     onAddDesk({ id, label: id })
     setDeskInput('')
   }
@@ -320,7 +321,7 @@ export default function AdminPage({ desks, reservations, users, onAddDesk, onRem
           <div className="mt-6 space-y-3">
             {upcomingReservations.map((reservation) => (
               <div key={reservation.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <p className="font-semibold text-slate-950">Desk {reservation.deskId}</p>
+                <p className="font-semibold text-slate-950">{getReservationLabel(reservation)}</p>
                 <p className="text-sm text-slate-600">{reservation.userName} — {reservation.date === todayString() ? 'Today' : reservation.date}</p>
               </div>
             ))}

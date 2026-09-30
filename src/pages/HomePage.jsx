@@ -3,7 +3,8 @@ import DeskCard from '../components/DeskCard.jsx'
 import DatePicker from '../components/DatePicker.jsx'
 import ReservationSummary from '../components/ReservationSummary.jsx'
 import DeskFilter from '../components/DeskFilter.jsx'
-import { getReservationByDesk, getUserReservations } from '../services/reservationService.js'
+import ParkingCard from '../components/ParkingCard.jsx'
+import { getReservationByDesk, getUserReservations, getParkingReservation, isParkingReservation } from '../services/reservationService.js'
 
 const seatMapImage = new URL('../../media/seatmapdistribution.png', import.meta.url).href
 
@@ -17,7 +18,7 @@ export default function HomePage({ user, desks, reservations, selectedDate, onDa
 
   const myReservations = useMemo(() => getUserReservations(reservations, user.id), [reservations, user.id])
   const hasBookingToday = useMemo(
-    () => dateReservations.some((reservation) => reservation.userId === user.id),
+    () => dateReservations.some((reservation) => reservation.userId === user.id && !isParkingReservation(reservation)),
     [dateReservations, user.id],
   )
   const [showMapPreview, setShowMapPreview] = useState(false)
@@ -101,6 +102,14 @@ export default function HomePage({ user, desks, reservations, selectedDate, onDa
             <DatePicker value={selectedDate} onChange={onDateChange} />
           </div>
         </section>
+
+        <ParkingCard
+          reservation={getParkingReservation(dateReservations, selectedDate)}
+          currentUserId={user.id}
+          onReserve={onReserve}
+          onCancel={onCancel}
+          selectedDate={selectedDate}
+        />
 
         <div className="grid gap-6 lg:grid-cols-2">
           <DeskFilter search={search} onSearch={setSearch} />
