@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient.js'
 import { initialDesks } from '../data/mockData.js'
+import { PARKING_ID } from './reservationService.js'
 
 const DESK_TABLE = 'desks'
 const RESERVATION_TABLE = 'reservations'
@@ -38,6 +39,18 @@ export async function ensureInitialDesks() {
     .insert(initialDesks.map((desk) => ({ id: desk.id, label: desk.label })))
   logSupabaseError('Error inserting initial desks', error)
   return { data: data || null, error }
+}
+
+// Parking reservations reference a PARKING row in desks so they satisfy the desk_id foreign key.
+export async function ensureParkingSpot(desks) {
+  if (desks.some((desk) => desk.id === PARKING_ID)) {
+    return { error: null }
+  }
+  const { error } = await supabase
+    .from(DESK_TABLE)
+    .upsert({ id: PARKING_ID, label: 'Parking' }, { onConflict: 'id', ignoreDuplicates: true })
+  logSupabaseError('Error ensuring parking spot', error)
+  return { error }
 }
 
 export async function createDesk(desk) {

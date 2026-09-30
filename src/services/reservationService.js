@@ -1,3 +1,13 @@
+export const PARKING_ID = 'PARKING'
+
+export function isParkingReservation(reservation) {
+  return reservation.deskId === PARKING_ID
+}
+
+export function getReservationLabel(reservation) {
+  return isParkingReservation(reservation) ? 'Parking spot' : `Desk ${reservation.deskId}`
+}
+
 export function getReservationsForDate(reservations, date) {
   return reservations.filter((reservation) => reservation.date === date)
 }
@@ -18,9 +28,18 @@ export function getUserReservations(reservations, userId) {
 export function canReserve(reservations, date, deskId, userId) {
   const reservedDesk = getReservationByDesk(reservations, date, deskId)
   const userBookedSameDay = reservations.some(
-    (reservation) => reservation.date === date && reservation.userId === userId,
+    (reservation) => reservation.date === date && reservation.userId === userId && !isParkingReservation(reservation),
   )
   return !reservedDesk && !userBookedSameDay
+}
+
+export function getParkingReservation(reservations, date) {
+  return getReservationByDesk(reservations, date, PARKING_ID)
+}
+
+// Single parking spot: one holder per day, independent of the holder's desk booking.
+export function canReserveParking(reservations, date) {
+  return !getParkingReservation(reservations, date)
 }
 
 export function createReservation(reservations, deskId, date, user) {

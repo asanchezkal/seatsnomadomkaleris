@@ -1,4 +1,5 @@
 import { formatDateLabel } from '../utils/dateUtils.js'
+import { getReservationLabel } from '../services/reservationService.js'
 
 export default function ReservationSummary({ reservations }) {
   return (
@@ -21,7 +22,7 @@ export default function ReservationSummary({ reservations }) {
         <div className="space-y-3">
           {reservations.map((reservation) => (
             <div key={reservation.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Desk {reservation.deskId}</p>
+              <p className="text-sm font-semibold text-slate-900">{getReservationLabel(reservation)}</p>
               <p className="text-sm text-slate-600">{formatDateLabel(reservation.date)}</p>
             </div>
           ))}
